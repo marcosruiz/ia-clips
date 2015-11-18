@@ -19,6 +19,8 @@
 {0pt} % altura del pie de página
 {2cm} % espacio entre el texto y el pie de página
 
+\lstset{breaklines=true, basicstyle=\footnotesize, frame=single}
+
 
 \title{Práctica 3 \\ Inteligencia Artificial \\ \large Universidad de Zaragoza}
 
@@ -29,13 +31,63 @@
 \begin{document}
 \maketitle
 
-\tableofcontents
+% \tableofcontents
 
 \section{Introducción}
 Se nos ha encargado escribir un programa CLIPS que resuelva el problema de las fichas. Para ello, se deberá utilizar el módulo de control para implementar el algoritmo A*. Es importante separar el módulo de control (MAIN) del resto de módulos para una correcta implementación.
 
 \section{Cambios}
+A continuación se van a comentar los cambios que se han realizado sobre la plantilla puzzle.clp, la cual ha sido proporcionada para dicho fin.
 
+\subsection{MODULO MAIN}
+\begin{enumerate}
+\item Se ha añadido el slot coste a la plantilla nodo.
+\item Se han modificado tanto el estado-inicial como el estado-final.
+\item Se ha hecho de cero la heurística H1.
+\begin{lstlisting}
+(deffunction MAIN::heuristica ($?estado)
+  (bind ?res 0)
+    (loop-for-count (?i 1 7)
+      (bind ?ficha (nth ?i $?estado))
+        (if (eq ?ficha V)
+          then
+          (loop-for-count (?j 1 ?i)
+            (if (eq ?j B)
+              then(bind ?res (+ ?res 1))
+            )
+          )
+        )
+      )
+?res)
+\end{lstlisting}
+\item Se ha modificado ligeramente la heurística H2 para que sirva para los nuevos estados y se ha comentado ya que la herurística H1 es mejor.
+\end{enumerate}
+\subsection{MODULO MAIN::INICIAL}
+\begin{enumerate}
+\item Se ha añadido que el slot coste comience con valor 0.
+\item En pasa-el-mejor-a-cerrado ahora tiene en cuenta el coste para que sea un A* y al final se le ha añadido la línea (focus OPERACIONES).
+\begin{lstlisting}
+(defrule MAIN::pasa-el-mejor-a-cerrado
+  ?nodo <- (nodo (clase abierto)(coste ?c1)(heuristica ?h1))
+  (not (nodo (clase abierto)(coste ?c2)(heuristica ?h2&:(< (+ ?h2 ?c2) (+ ?h1 ?c1)))))
+=>
+  (modify ?nodo (clase cerrado))
+  (focus OPERACIONES))
+\end{lstlisting}
+\end{enumerate}
+\subsection{MODULO MAIN::OPERACIONES}
+\begin{enumerate}
+\item Tanto las reglas izquierda como derecha se han modificado para que sean capaces de mover el hueco (H) hasta tres posiciones a la izquierda o hasta tres posiciones a la derecha respectivamente.
+\end{enumerate}
+\subsection{MODULO RESTRICCIONES}
+\begin{enumerate}
+\item La regla repeticiones-de-nodo ha sido modificada para que elimine todos los nodos los cuales esten en el mismo estado pero su camino sea mayor.
+\end{enumerate}
+\subsection{MODULO MAIN::SOLUCION}
+\begin{enumerate}
+\item La regla reconoce-solucion ha sido modificada para que reconozca correctamente el nuevo estado final.
+\item La regla escribe-solucion se ha modificado para que muestre los estados por los que pasa el tablero y el coste de la solución.
+\end{enumerate}
 \section{Salida}
 \begin{lstlisting}
 Solucion:
@@ -54,6 +106,8 @@ Coste: 10
 \end{lstlisting}
 
 \section{Conclusión}
-Los lenguajes basados en reglas como CLIPS permiten al desarrollador centrarse 
+Los lenguajes basados en reglas como CLIPS permiten al desarrollador resolver problemas a un más alto nivel que con los lenguajes convencionales (C, Java, C++, ...) permitiendonos centrarnos más en el problema real. Los lenguajes como CLIPS nos permiten representar el conocimiento mediante reglas heurísticas que especifican las acciones a ser ejecutadas dada una determinada situación.
 
 \end{document}
+
+
